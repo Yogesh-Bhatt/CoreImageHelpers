@@ -72,8 +72,10 @@ extension CameraCaptureHelper: AVCaptureVideoDataOutputSampleBufferDelegate
 {
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!)
     {
-        connection.videoOrientation = AVCaptureVideoOrientation(rawValue: UIApplication.shared.statusBarOrientation.rawValue)!
-        
+		DispatchQueue.main.async
+        {
+			connection.videoOrientation = AVCaptureVideoOrientation(rawValue: UIApplication.shared.statusBarOrientation.rawValue)!
+		}        
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else
         {
             return
