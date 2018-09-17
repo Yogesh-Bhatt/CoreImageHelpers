@@ -17,86 +17,92 @@ import QuartzCore
 
 class MetalImageView: MTKView
 {
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    
-    lazy var commandQueue: MTLCommandQueue =
-    {
-        [unowned self] in
-        
-        return self.device!.makeCommandQueue()
-    }()
-    
-    lazy var ciContext: CIContext =
-    {
-        [unowned self] in
-        
-        return CIContext(mtlDevice: self.device!)
-    }()
-    
-    override init(frame frameRect: CGRect, device: MTLDevice?)
-    {
-        super.init(frame: frameRect,
-            device: device ?? MTLCreateSystemDefaultDevice())
-
-        if super.device == nil
-        {
-            fatalError("Device doesn't support Metal")
-        }
-        
-        framebufferOnly = false
-    }
-
-    required init(coder: NSCoder)
-    {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    /// The image to display
-    var image: CIImage?
-    {
-        didSet
-        {
-            renderImage()
-        }
-    }
-    
-    func renderImage()
-    {
-        guard let
-            image = image,
-            let targetTexture = currentDrawable?.texture else
-        {
-            return
-        }
-        
-        let commandBuffer = commandQueue.makeCommandBuffer()
-        
-        let bounds = CGRect(origin: CGPoint.zero, size: drawableSize)
-        
-        let originX = image.extent.origin.x
-        let originY = image.extent.origin.y
-        
-        let scaleX = drawableSize.width / image.extent.width
-        let scaleY = drawableSize.height / image.extent.height
-        let scale = min(scaleX, scaleY)
-        
-        let scaledImage = image
-            .applying(CGAffineTransform(translationX: -originX, y: -originY))
-            .applying(CGAffineTransform(scaleX: scale, y: scale))
-        
-        ciContext.render(scaledImage,
-            to: targetTexture,
-            commandBuffer: commandBuffer,
-            bounds: bounds,
-            colorSpace: colorSpace)
-        
-        commandBuffer.present(currentDrawable!)
-        
-        commandBuffer.commit()
-        
-        draw()
-        
-    }
+	let colorSpace = CGColorSpaceCreateDeviceRGB()
+	
+	lazy var commandQueue: MTLCommandQueue =
+		{
+			[unowned self] in
+			
+			return self.device!.makeCommandQueue()
+			}()!
+	
+	lazy var ciContext: CIContext =
+		{
+			[unowned self] in
+			
+			return CIContext(mtlDevice: self.device!)
+			}()
+	
+	override init(frame frameRect: CGRect, device: MTLDevice?)
+	{
+		super.init(frame: frameRect,
+				   device: device ?? MTLCreateSystemDefaultDevice())
+		
+		if super.device == nil
+		{
+			fatalError("Device doesn't support Metal")
+		}
+		
+		framebufferOnly = false
+		
+		enableSetNeedsDisplay = true
+		
+		isPaused = true
+		
+	}
+	
+	required init(coder: NSCoder)
+	{
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	/// The image to display
+	var image: CIImage?
+	{
+		didSet
+		{
+			//renderImage()
+			//draw()
+			setNeedsDisplay()
+		}
+	}
+	
+	override func draw(_ rect: CGRect)
+	{
+		guard let
+			image = image,
+			let targetTexture = currentDrawable?.texture else
+		{
+			return
+		}
+		
+		let commandBuffer = commandQueue.makeCommandBuffer()
+		
+		let bounds = CGRect(origin: CGPoint.zero, size: drawableSize)
+		
+		let originX = image.extent.origin.x
+		let originY = image.extent.origin.y
+		
+		let scaleX = drawableSize.width / image.extent.width
+		let scaleY = drawableSize.height / image.extent.height
+		let scale = min(scaleX, scaleY)
+		
+		let scaledImage = image
+			.transformed(by: CGAffineTransform(translationX: -originX, y: -originY))
+			.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+		
+		ciContext.render(scaledImage,
+						 to: targetTexture,
+						 commandBuffer: commandBuffer,
+						 bounds: bounds,
+						 colorSpace: colorSpace)
+		
+		commandBuffer?.present(currentDrawable!)
+		
+		commandBuffer?.commit()
+		
+		//draw()
+	}
 }
 
 /// `OpenGLImageView` wraps up a `GLKView` and its delegate into a single class to simplify the
