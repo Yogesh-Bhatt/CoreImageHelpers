@@ -93,6 +93,9 @@ class MetalImageView: MTKView
         commandBuffer.present(currentDrawable!)
         
         commandBuffer.commit()
+        
+        draw() 
+        
     }
 }
 
