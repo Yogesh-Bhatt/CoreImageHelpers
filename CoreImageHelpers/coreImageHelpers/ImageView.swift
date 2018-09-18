@@ -49,6 +49,10 @@ class MetalImageView: MTKView
 		
 		isPaused = true
 		
+		// by default, it will try to redraw this view up to 60 times a sec
+		// set lower for better performance
+		preferredFramesPerSecond = 30
+		
 	}
 	
 	required init(coder: NSCoder)
